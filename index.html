@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inyector de Scripts en Enlaces</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Contenedor Principal -->
+    <div id="app" class="container mx-auto p-4 md:p-8 max-w-4xl">
+
+        <!-- Vista del Generador de Enlaces (Visible por defecto) -->
+        <div id="generator-view" class="space-y-8 fade-in">
+            <header class="text-center">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Herramienta para Inyectar Scripts</h1>
+                <p class="mt-2 text-md text-gray-600">Pega una URL de destino y tu script (ej. Píxel de Meta) para generar un nuevo enlace de seguimiento.</p>
+            </header>
+
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-gray-200">
+                <div class="space-y-6">
+                    <!-- Campo para la URL de Destino -->
+                    <div>
+                        <label for="destination-url" class="block text-sm font-medium text-gray-700 mb-1">URL de Destino</label>
+                        <input type="url" id="destination-url" placeholder="https://ejemplo.com/pagina-de-pago" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+
+                    <!-- Campo para el Script -->
+                    <div>
+                        <label for="script-code" class="block text-sm font-medium text-gray-700 mb-1">Tu Código Script</label>
+                        <textarea id="script-code" rows="8" placeholder="<!-- Pega tu código de Píxel de Facebook aquí -->" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-mono text-sm"></textarea>
+                    </div>
+
+                    <!-- Botón para Generar Enlace -->
+                    <div>
+                        <button id="generate-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105 flex items-center justify-center">
+                            <svg id="btn-icon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            <span id="btn-text">Generar Enlace</span>
+                            <div id="btn-loader" class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Resultados (Oculta por defecto) -->
+            <div id="result-section" class="hidden bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                 <div class="flex">
+                    <div class="py-1">
+                        <svg class="w-6 h-6 text-green-500 mr-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div>
+                        <p class="font-bold text-green-800">¡Enlace generado con éxito!</p>
+                        <div class="mt-2 flex flex-wrap items-center gap-2 bg-white p-3 rounded-lg border">
+                            <input type="text" id="generated-link" readonly class="flex-grow bg-transparent outline-none text-green-900">
+                            <button id="copy-btn" class="bg-green-600 text-white px-4 py-1 rounded-md hover:bg-green-700 text-sm font-semibold">Copiar</button>
+                        </div>
+                         <p id="copy-feedback" class="text-sm text-green-700 mt-1"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alerta de Seguridad -->
+            <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 rounded-r-lg">
+                <div class="flex">
+                    <div class="py-1">
+                        <svg class="w-6 h-6 text-yellow-400 mr-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.636-1.21 2.862-1.21 3.498 0l6.28 12.001A2 2 0 0116.28 18H3.72a2 2 0 01-1.755-2.899l6.28-12.001zM10 14a1 1 0 110-2 1 1 0 010 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div>
+                        <p class="font-bold">Nota de Seguridad</p>
+                        <p class="text-sm">Esta herramienta ejecutará cualquier código que insertes. Asegúrate de que el script proviene de una fuente confiable (como Meta/Facebook) para evitar riesgos de seguridad.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista de Redirección (Oculta por defecto) -->
+        <div id="redirect-view" class="hidden text-center p-10 bg-white rounded-xl shadow-lg border border-gray-200">
+            <div class="flex flex-col items-center justify-center space-y-4">
+                <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <h2 class="text-2xl font-semibold text-gray-800">Preparando tu enlace...</h2>
+                <p class="text-gray-600">Serás redirigido en un momento.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Import functions from the SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        // Estas variables serán proporcionadas por el entorno de Canvas. No las cambies.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-script-injector';
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- LÓGICA DE LA APLICACIÓN ---
+
+        const generatorView = document.getElementById('generator-view');
+        const redirectView = document.getElementById('redirect-view');
+        const destinationUrlInput = document.getElementById('destination-url');
+        const scriptCodeInput = document.getElementById('script-code');
+        const generateBtn = document.getElementById('generate-btn');
+        const resultSection = document.getElementById('result-section');
+        const generatedLinkInput = document.getElementById('generated-link');
+        const copyBtn = document.getElementById('copy-btn');
+        const copyFeedback = document.getElementById('copy-feedback');
+
+        // Función para manejar la generación de enlaces
+        const handleGenerateLink = async () => {
+            const destinationUrl = destinationUrlInput.value.trim();
+            const scriptCode = scriptCodeInput.value.trim();
+
+            if (!destinationUrl || !scriptCode) {
+                alert("Por favor, completa la URL de destino y el código del script.");
+                return;
+            }
+            
+            try {
+                // Validar URL
+                new URL(destinationUrl);
+            } catch (_) {
+                alert("Por favor, introduce una URL de destino válida.");
+                return;
+            }
+
+            // Mostrar loader en el botón
+            toggleButtonLoading(true);
+
+            try {
+                // Generar un ID único para el enlace
+                const linkId = crypto.randomUUID().split('-')[0];
+                
+                // Definir la ruta en Firestore
+                const linkRef = doc(db, `artifacts/${appId}/public/data/links`, linkId);
+
+                // Guardar los datos en Firestore
+                await setDoc(linkRef, {
+                    originalUrl: destinationUrl,
+                    script: scriptCode,
+                    createdAt: new Date()
+                });
+
+                // Construir el enlace de redirección
+                const currentUrl = new URL(window.location.href);
+                currentUrl.search = `?id=${linkId}`; // Limpiar otros parámetros y añadir solo el id
+                const newLink = currentUrl.href;
+
+                // Mostrar el resultado
+                generatedLinkInput.value = newLink;
+                resultSection.classList.remove('hidden');
+                resultSection.classList.add('fade-in');
+                copyFeedback.textContent = '';
+
+
+            } catch (error) {
+                console.error("Error al generar el enlace:", error);
+                alert("Hubo un error al generar el enlace. Por favor, inténtalo de nuevo.");
+            } finally {
+                // Ocultar loader del botón
+                toggleButtonLoading(false);
+            }
+        };
+
+        // Función para manejar la redirección
+        const handleRedirect = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const linkId = urlParams.get('id');
+
+            if (linkId) {
+                // Si hay un ID, ocultar el generador y mostrar la vista de redirección
+                generatorView.style.display = 'none';
+                redirectView.style.display = 'block';
+
+                try {
+                    const linkRef = doc(db, `artifacts/${appId}/public/data/links`, linkId);
+                    const docSnap = await getDoc(linkRef);
+
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        const { originalUrl, script } = data;
+
+                        // 1. Inyectar y ejecutar el script del usuario
+                        if (script) {
+                            const scriptElement = document.createElement('script');
+                            scriptElement.innerHTML = script;
+                            document.head.appendChild(scriptElement);
+                        }
+                        
+                        // 2. Redirigir al usuario a la URL original
+                        // Usamos un pequeño timeout para dar tiempo a que el script (píxel) se dispare
+                        setTimeout(() => {
+                            window.location.href = originalUrl;
+                        }, 200); // 200ms de retraso
+
+                    } else {
+                        console.error("No se encontró ningún enlace con ese ID.");
+                        redirectView.innerHTML = `<p class="text-red-500 font-bold">Error: El enlace no es válido o ha expirado.</p>`;
+                    }
+                } catch (error) {
+                    console.error("Error al procesar la redirección:", error);
+                    redirectView.innerHTML = `<p class="text-red-500 font-bold">Error al procesar tu solicitud.</p>`;
+                }
+            } else {
+                // Si no hay ID, mostrar la vista del generador
+                generatorView.style.display = 'block';
+                redirectView.style.display = 'none';
+            }
+        };
+        
+        // Función para copiar al portapapeles
+        const handleCopy = () => {
+            const linkToCopy = generatedLinkInput.value;
+            
+            // Usamos el método execCommand por compatibilidad con iframes
+            const textArea = document.createElement("textarea");
+            textArea.value = linkToCopy;
+            textArea.style.position = "fixed"; // Evita que se vea en pantalla
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                copyFeedback.textContent = '¡Copiado!';
+                setTimeout(() => copyFeedback.textContent = '', 2000);
+            } catch (err) {
+                console.error('No se pudo copiar el texto: ', err);
+                copyFeedback.textContent = 'Error al copiar';
+            }
+            document.body.removeChild(textArea);
+        };
+
+        // Función para alternar el estado de carga del botón
+        const toggleButtonLoading = (isLoading) => {
+            const btnIcon = document.getElementById('btn-icon');
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
+            
+            if (isLoading) {
+                generateBtn.disabled = true;
+                btnIcon.classList.add('hidden');
+                btnText.classList.add('hidden');
+                btnLoader.classList.remove('hidden');
+            } else {
+                generateBtn.disabled = false;
+                btnIcon.classList.remove('hidden');
+                btnText.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            }
+        };
+
+        // --- INICIALIZACIÓN ---
+        
+        // Iniciar sesión anónimamente para obtener permisos de Firestore
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // El usuario ha iniciado sesión, ahora podemos manejar la lógica
+                console.log("Autenticación anónima exitosa. UID:", user.uid);
+                handleRedirect(); // Comprobar si es una redirección o la página principal
+            }
+        });
+
+        signInAnonymously(auth).catch((error) => {
+            console.error("Error en la autenticación anónima:", error);
+            alert("No se pudo conectar con el servicio. Por favor, refresca la página.");
+        });
+
+        // Asignar eventos a los botones
+        generateBtn.addEventListener('click', handleGenerateLink);
+        copyBtn.addEventListener('click', handleCopy);
+
+    </script>
+</body>
+</html>
