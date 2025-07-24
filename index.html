@@ -175,11 +175,21 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
+
+// Se inicializa el píxel con el ID proporcionado.
 fbq('init', 'PIXELID');
+
+// 1. Evento PageView: Se dispara SIEMPRE que se carga la página.
 fbq('track', 'PageView');
+
+// 2. Evento Purchase: Se dispara SÓLO la primera vez que un usuario abre el enlace.
+// Se utiliza localStorage para recordar si el evento ya fue disparado para este píxel.
 const purchaseEventKey = 'purchaseEventFired_' + 'PIXELID';
 if (!localStorage.getItem(purchaseEventKey)) {
+  // Si no se encuentra el registro en localStorage, se dispara el evento 'Purchase'.
   fbq('track', 'Purchase', {value: PURCHASEVALUE, currency: 'PURCHASECURRENCY'});
+  
+  // Se crea el registro en localStorage para evitar que se dispare de nuevo.
   localStorage.setItem(purchaseEventKey, 'true');
 }
 <\/script>
